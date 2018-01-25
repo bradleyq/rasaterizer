@@ -494,8 +494,18 @@ void DrawRend::rasterize_triangle( float x0, float y0,
   // Part 4: Add barycentric coordinates and use tri->color for shading when available.
   // Part 5: Fill in the SampleParams struct and pass it to the tri->color function.
   // Part 6: Pass in correct barycentric differentials to tri->color for mipmapping.
-
-
+  n1[] = {y0-y1, x1-x0};
+  n2[] = {y1-y2, x2-x1};
+  n3[] = {y2-y0, x0-x2};
+  for (int i = 0; i < samplebuffer.size(); i++) {
+    for (int j = 0; j < samplebuffer[0].size(); j++) {
+      int sum = 0;
+      sum += ((j-x0) * n1[0] + (i-y0) * n1[1]) > 0;
+      sum += ((j-x1) * n2[0] + (i-y1) * n2[1]) > 0;
+      sum += ((j-x2) * n3[0] + (i-y2) * n3[1]) > 0;      
+      if (sum == 0) samplebuffer[i][j].fill_pixel(color);
+    }
+  }
 }
 
 

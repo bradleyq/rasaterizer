@@ -102,7 +102,9 @@ private:
       PixelColorStorage &p = sub_pixels[i][j];
       // Part 1: Overwrite PixelColorStorage p using Color c.
       //         Pay attention to different data types.
-
+      p[0] = static_cast<unsigned char>(std::round(c.r * 255));
+      p[1] = static_cast<unsigned char>(std::round(c.g * 255));
+      p[2] = static_cast<unsigned char>(std::round(c,b * 255));
     }
 
     void fill_pixel(Color c) {
