@@ -104,7 +104,8 @@ private:
       //         Pay attention to different data types.
       p[0] = static_cast<unsigned char>(std::round(c.r * 255));
       p[1] = static_cast<unsigned char>(std::round(c.g * 255));
-      p[2] = static_cast<unsigned char>(std::round(c,b * 255));
+      p[2] = static_cast<unsigned char>(std::round(c.b * 255));
+      p[3] = static_cast<unsigned char>(std::round(c.a * 255));
     }
 
     void fill_pixel(Color c) {
@@ -114,9 +115,24 @@ private:
     }
 
     Color get_pixel_color() {
-      return Color(sub_pixels[0][0].data());
+      //return Color(sub_pixels[0][0].data());
       // Part 2: Implement get_pixel_color() for supersampling.
-
+      std::vector<unsigned int> sum = std::vector<unsigned int>(4,0);
+      for (int i = 0; i < samples_per_side; i++) {
+        for (int j = 0; j < samples_per_side; j++) {
+           PixelColorStorage &p = sub_pixels[i][j];
+           sum[0] += p[0];
+           sum[1] += p[1];
+           sum[2] += p[2];
+           sum[3] += p[3];
+        }
+      }
+      PixelColorStorage p(4);
+      p[0] = static_cast<unsigned char>(std::round(sum[0]*1.0f/(samples_per_side*samples_per_side)));
+      p[1] = static_cast<unsigned char>(std::round(sum[1]*1.0f/(samples_per_side*samples_per_side)));
+      p[2] = static_cast<unsigned char>(std::round(sum[2]*1.0f/(samples_per_side*samples_per_side)));
+      p[3] = static_cast<unsigned char>(std::round(sum[3]*1.0f/(samples_per_side*samples_per_side)));
+      return Color(p.data());
     }
 
     void clear() {
@@ -154,8 +170,8 @@ private:
       }
     }
   }
-
-
+  
+  void sort3(float *a);
 };
 
 } // namespace CGL

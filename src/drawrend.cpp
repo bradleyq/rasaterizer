@@ -475,6 +475,26 @@ void DrawRend::rasterize_line( float x0, float y0,
   }
 }
 
+void DrawRend::sort3(float *a) {
+  float tmp;
+  if (a[0] > a[1]) {
+    tmp = a[0];
+    a[0] = a[1];
+    a[1] = tmp;
+  }
+  if (a[1] > a[2]) {
+    tmp = a[1];
+    a[1] = a[2];
+    a[2] = tmp;
+  }
+  if (a[0] > a[1]) {
+    tmp = a[0];
+    a[0] = a[1];
+    a[1] = tmp;
+  }
+}
+
+
 // Rasterize a triangle.
 void DrawRend::rasterize_triangle( float x0, float y0,
                          float x1, float y1,
@@ -494,20 +514,39 @@ void DrawRend::rasterize_triangle( float x0, float y0,
   // Part 4: Add barycentric coordinates and use tri->color for shading when available.
   // Part 5: Fill in the SampleParams struct and pass it to the tri->color function.
   // Part 6: Pass in correct barycentric differentials to tri->color for mipmapping.
-  n1[] = {y0-y1, x1-x0};
-  n2[] = {y1-y2, x2-x1};
-  n3[] = {y2-y0, x0-x2};
-  for (int i = 0; i < samplebuffer.size(); i++) {
-    for (int j = 0; j < samplebuffer[0].size(); j++) {
-      int sum = 0;
-      sum += ((j-x0) * n1[0] + (i-y0) * n1[1]) > 0;
-      sum += ((j-x1) * n2[0] + (i-y1) * n2[1]) > 0;
-      sum += ((j-x2) * n3[0] + (i-y2) * n3[1]) > 0;      
-      if (sum == 0) samplebuffer[i][j].fill_pixel(color);
+  float x[] = {y0-y1, y1-y2, y2-y0};
+  float y[] = {x1-x0, x2-x1, x0-x2};
+  
+  float nx[] = {x0, x1, x2};
+  float ny[] = {y0, y1, y2};
+  sort3(nx);
+  sort3(ny);
+  float ylower = clamp(floor(ny[0]), 0.0f, static_cast<float>(height));
+  float yupper = clamp(ceil(ny[2]), 0.0f, static_cast<float>(height));
+  float xlower = clamp(floor(nx[0]), 0.0f, static_cast<float>(width));
+  float xupper = clamp(ceil(nx[2]), 0.0f, static_cast<float>(width));
+  int axissamp = static_cast<int>(sqrt(sample_rate));
+
+  for (int i = ylower; i < yupper; i++) {
+    float fi = static_cast<float>(i);
+    for (int j = xlower; j < xupper; j++) {
+      float fj = static_cast<float>(j);
+      for (int subi = 0; subi < axissamp; subi++) {
+        float subposi = fi + (subi + 0.5f)/axissamp;
+        float c0 = (y0-subposi) * y[0];
+        float c1 = (y1-subposi) * y[1];
+        float c2 = (y2-subposi) * y[2];
+        for (int subj = 0; subj < axissamp; subj++) {
+          float subposj = fj + (subj + 0.5f)/axissamp;
+          int sum = 0;
+          sum += (subposj-x0) * x[0] < c0;
+          sum += (subposj-x1) * x[1] < c1;
+          sum += (subposj-x2) * x[2] < c2;      
+          if (sum == 0) samplebuffer[i][j].fill_color(subi, subj, color);
+        }
+      }
     }
   }
 }
-
-
 
 }
