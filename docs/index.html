@@ -25,70 +25,236 @@
 
 <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2018</h1>
 <h1 align="middle">Project 1: Rasterizer</h1>
-<h2 align="middle">YOUR NAME, CS184-??</h2>
+<h2 align="middle">Bradley Qu, CS184-afx</h2>
 
 <br><br>
 
 <div>
 
 <h2 align="middle">Overview</h2>
-<p>Give a high-level overview of what you implemented in this project. Think about what you've built as a whole. Share your thoughts on what interesting things you've learned from completing the project.</p>
+
+<p>I implemented a rasterizer that can read in svg files and render them
+with colors and texures. The rasterizer also has filters like antialiasing, biliniear
+interpolation, and mipmapping for improvement of overall image quality. The part
+I enjoyed enjoyed most was bulding the rasterizer's filtering effects. Filters
+always looked like complex magic to me, but now I understand how simple the concept
+is. Of course, I am also awed by how well optimized these processes are in 
+professional use (as compared to mine).
+</p>
 
 <h2 align="middle">Section I: Rasterization</h2>
 
 <h3 align="middle">Part 1: Rasterizing single-color triangles</h3>
 
-<p>Here is an example 2x2 gridlike structure using an HTML table. Each <b>tr</b> is a row and each <b>td</b> is a column in that row. You might find this useful for framing and showing your result images in an organized fashion.</p>
+<p>I rasterize the triangles by first calculating the bounding box of the triangle. I do this
+  by adding the vertices to arrays and running a three item hard-coded sort on them. The minimum
+  x and minimum y marks the top left corner of the box and maximum x and y mark the bottom right.
+  Then, I iterate through every pixel center in the box and calculate its projection onto the normals
+  of the three edges (edges are constructed in a loop so normals are always all out or in). Since 
+  I use a bounding box, there is no way my rendering is any slower than a bounding box.
+  I have a counter counting negative projections. If there are three negative projections or
+  three positive ones, the point is in a triange since that is the only way 3 normals can have
+  the same sign in this setup. Once I know a pixel is in a triangle, I fetch its color and draw it.
+</p>
+<div align="middle">
+  <img src="images/image1.png" align="middle" width="400px"/>
+  <figcaption align="middle">Test 4</figcaption>
+</div>
+<p>
+  There are small basic optimizations like reusing computed values instead of recomputing them
+  in the innermost loop. No timing comparisons, however.
+</p>
+
+
+<h3 align="middle">Part 2: Antialiasing triangles</h3>
+<p>
+  Supersampled antialiasing was done through added inner loops to rasterize_triangle. In order to 
+  avoid floating point error, I kept the outer loops for integer pixel steps and had an inner loop 
+  that dealt with the fractional pixels. I also moved normal checks to within the inner loop so
+  pixels with centers not in the triangle still get colored. When actual scene is being drawn,
+  the get_pixel_color method takes the average of a 2D matrix of subpixels for the final color.
+  Supersampling works because it samples the geometry at higher frequency and lowpasses it to
+  produce a smoother image.
+</p>
 
 <div align="middle">
   <table style="width=100%">
     <tr>
       <td>
-        <img src="images/image1.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
+        <img src="images/image2.png" align="middle" width="400px"/>
+        <figcaption align="middle">1 sample</figcaption>
       </td>
       <td>
-        <img src="images/image2.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
+        <img src="images/image3.png" align="middle" width="400px"/>
+        <figcaption align="middle">4 supersamples</figcaption>
+      </td>
+       <td>
+        <img src="images/image4.png" align="middle" width="400px"/>
+        <figcaption align="middle">16 supersamples</figcaption>
       </td>
     </tr>
     <br>
-    <tr>
-      <td>
-        <img src="images/image3.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
-      </td>
-      <td>
-        <img src="images/image4.png" align="middle" width="400px"/>
-        <figcaption align="middle">Caption goes here.</figcaption>
-      </td>
-    </tr>
   </table>
 </div>
 
 
-<h3 align="middle">Part 2: Antialiasing triangles</h3>
-
-
-
 <h3 align="middle">Part 3: Transforms</h3>
-
-
+<div align="middle">
+  <img src="images/image5.png" align="middle" width="400px"/>
+  <figcaption align="middle">A Red Dancer</figcaption>
+</div>
+<p>
+  Here is a depiction of a nodescript red dancer. Featureless and Genderless, waltzing across the canvas. The dancer 
+  is the epitome of simple geometric beauty and the human body in its most pure shapes.
+</p>
 
 <h2 align="middle">Section II: Sampling</h2>
 
 <h3 align="middle">Part 4: Barycentric coordinates</h3>
 
+<p>
+  Barycentric coordinates are coordinates within a triangle that describe a points relative distances from the three 
+  vertices. More specifically, if a pixel in question were to be connected to each vertex, the barycentric coordinate
+  from a vertex is the the area of the subtriangle opposite the vertex over total area. My specific implementation, however,
+  uses Kramer's rule to solve a 2x2 system for Barycentric coordinates. This take significantly fewer computations
+  than finding areas and ratios given in the lecture slide. An important property of these coordinates is that the 
+  coordinate from each vertex summed is 1. Thus, These coordinates can be used to take linear combinations of 
+  vertex colors and calculate good gradients as shown below. Notice how the middle of the triangle is perfectly grey
+  which is avg of r, g, and b.
+</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <img src="images/image6.png" align="middle" width="400px"/>
+      <figcaption align="middle">Triangle with pure red, green, blue vertices and barycentric blending</figcaption>
+    </tr>
+    <tr>
+      <img src="images/image7.png" align="middle" width="400px"/>
+      <figcaption align="middle">Test 7</figcaption>
+    </tr>
+    <br>
+  </table>
+</div>
 
 <h3 align="middle">Part 5: "Pixel sampling" for texture mapping</h3>
 
+<p>
+  Pixel sampling is a method of sampling the color of a pixel from a sparse discrete dataset. Since discrete sets have gaps in
+  between samples, sampling from one requires a form of extrapolation. We implemented two variants: nearest and bilinear.
+  Nearest finds the closest sample and takes that color value. Biliniear takes the lerp(weighted average) between the 
+  four closest pixels. I implemented the pixel sampling for texures by transforming cartesian coordinates to UV coordinates
+  in the texures. This is done through converting cartesian to barycentring first. Then, I take a barycentric linear 
+  combination of the UV coordinates of the triangle vertexes to find the UV coordinate of the pixel. I can then use the 
+  pixel sampling techniques described earlier to sample the color at that point on the texture.
+</p>
+
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/image8.png" align="middle" width="400px"/>
+        <figcaption align="middle">1 sample nearest</figcaption>
+      </td>
+      <td>
+        <img src="images/image9.png" align="middle" width="400px"/>
+        <figcaption align="middle">1 sample bilinear</figcaption>
+      </td>
+    </tr>
+     <tr>
+      <td>
+        <img src="images/image10.png" align="middle" width="400px"/>
+        <figcaption align="middle">16 sample nearest</figcaption>
+      </td>
+      <td>
+        <img src="images/image11.png" align="middle" width="400px"/>
+        <figcaption align="middle">16 sample bilinear</figcaption>
+      </td>
+    </tr>
+    <br>
+  </table>
+</div>
+
+Overall, bilinear pixel sampling produces a smoother and less pixelated texture when the source is low res. It is much easier 
+to identify key features with bilinear filtering activated. The benefits of bilinear filtering, however, diminish as the screen
+sample rate and texel rate approach each other as there is less need to interpolate the gaps. An extreme case would be where
+texure and screen grid line up perfectly. Then, bilinear interpolation will have no effect. Bilinear is effective when there is
+a stretched, low resolution, or highly alised texture as shown in the images above.
 
 <h3 align="middle">Part 6: "Level sampling" with mipmaps for texture mapping</h3>
 
+<p>
+  Level sampling is downsampling texures that are too high resolution for the screenspace it occupies. Multiple resolutions of
+  a texture are stored and the appropriate one is referenced for given distort/scale factors. Level sampling is primarily used
+  to reduce aliasing from minification and Moire. I implemented it by using barycentric coordinates of adjacent pixels to find 
+  the ratio of pixel to texel sizes. I then use these ratios to compute how much a texel must be scaled (texure is downsampled)
+  to match a size similar to the pixel size. Trilinear filtering is implemented by taking an additional lerp between the two 
+  closest levels (mipmaps).
+</p>
+<div align="middle">
+  <table style="width=100%">
+    <tr>
+      <td>
+        <img src="images/image12.png" align="middle" width="400px"/>
+        <figcaption align="middle">L_ZERO + P_NEAREST</figcaption>
+      </td>
+      <td>
+        <img src="images/image13.png" align="middle" width="400px"/>
+        <figcaption align="middle">L_NEAREST + P_NEAREST</figcaption>
+      </td>
+        <td>
+        <img src="images/image14.png" align="middle" width="400px"/>
+        <figcaption align="middle">L_LINEAR + P_NEAREST</figcaption>
+      </td>
+    </tr>
+     <tr>
+      <td>
+        <img src="images/image16.png" align="middle" width="400px"/>
+        <figcaption align="middle">L_ZERO + P_LINEAR</figcaption>
+      </td>
+      <td>
+        <img src="images/image17.png" align="middle" width="400px"/>
+        <figcaption align="middle">L_NEAREST + P_LINEAR</figcaption>
+      </td>
+        <td>
+        <img src="images/image18.png" align="middle" width="400px"/>
+        <figcaption align="middle">L_LINEAR + P_LINEAR</figcaption>
+      </td>
+    </tr>
+    <br>
+  </table>
+</div>
+
+
+<p>
+  When it comes to antialiasing geometry, supersampling outputs the best quality. It smooths edges very effectively and can also
+  help defend against Moire in minification. It is, however, very costly to performance in calulcations and memory. There need
+  to be supersamples stored and drastically increased sampling.
+</p>
+<p>
+  For antialiasing jagged or magnified texures, bilinear interpolation (pixel sampling) is a good choice. It allows for smooth transitions 
+  between texels and is also relatively cheap. It is a good texure antialiasing option but it does increase blur so there is loss of certain
+  fine details. No increased memory and few computations.
+</p>
+<p>
+  For decreasing Moire aliasing due to minification, level sampling is the way to go. The one we implemented is mipmapping. Mipmapping,
+  however, has huge blurring issues at oblique angles. It increases memory usage by a bit too (1/3), but it is not really computationally
+  expensive. Triliniear interpolation, however, bumps up the compute overhead as it doubles the memory access and lerp calls.
+</p>
+<p>
+  Only when texure resolution and screen resolution match is nearest sample a good choice. It is, of course, the cheapest filtering
+  technique as it only accesses one pixel.
+</p>
 
 
 <h2 align="middle">Section III: Art Competition</h2>
-<p>If you are not participating in the optional art competition, don't worry about this section!</p>
+<p>This is not a custom svg at all. Instead, this is basic/test7.svg. I had an elusive bug in the barycentric calculation
+that resulted in this beauty.</p>
+<div align="middle">
+  <img src="images/image19.png" align="middle" width="400px"/>
+  <figcaption align="middle">Wheel of Frustration</figcaption>
+</div>
+
 
 <h3 align="middle">Part 7: Draw something interesting!</h3>
 

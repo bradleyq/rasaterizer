@@ -529,6 +529,8 @@ void DrawRend::rasterize_triangle( float x0, float y0,
   float denom, xa, xb, ya, yb, offxb, offxc, offyb, offyc;
   float u[2] = {x1-x0,y1-y0};
   float v[2] = {x2-x0,y2-y0};
+  //float u[2] = {tri->p1_svg.x-tri->p0_svg.x, tri->p1_svg.y-tri->p0_svg.y};
+  //float v[2] = {tri->p2_svg.x-tri->p0_svg.x, tri->p2_svg.y-tri->p0_svg.y};
   if (tri != NULL) {
     denom = u[0] * v[1] - v[0] * u[1];
     float frac = 1.0f/(axissamp * denom);
@@ -556,6 +558,8 @@ void DrawRend::rasterize_triangle( float x0, float y0,
           sum += (subposj-x2) * x[2] < c2;
           if (sum == 0 || sum == 3) {
             if (tri != NULL) {
+              //p1 = subposi-tri->p0_svg.y;
+              //p2 = subposj-tri->p0_svg.x;
               float b = (p2 * v[1] - v[0] * p1) / denom;
               float c = (u[0] * p1 - p2 * u[1]) / denom;
               SampleParams params;
