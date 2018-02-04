@@ -514,11 +514,11 @@ void DrawRend::rasterize_triangle( float x0, float y0,
   // Part 4: Add barycentric coordinates and use tri->color for shading when available.
   // Part 5: Fill in the SampleParams struct and pass it to the tri->color function.
   // Part 6: Pass in correct barycentric differentials to tri->color for mipmapping.
-  float x[] = {y0-y1, y1-y2, y2-y0};
-  float y[] = {x1-x0, x2-x1, x0-x2};
+  float x[3] = {y0-y1, y1-y2, y2-y0};
+  float y[3] = {x1-x0, x2-x1, x0-x2};
   
-  float nx[] = {x0, x1, x2};
-  float ny[] = {y0, y1, y2};
+  float nx[3] = {x0, x1, x2};
+  float ny[3] = {y0, y1, y2};
   sort3(nx);
   sort3(ny);
   float ylower = clamp(floor(ny[0]), 0.0f, static_cast<float>(height));
@@ -526,23 +526,50 @@ void DrawRend::rasterize_triangle( float x0, float y0,
   float xlower = clamp(floor(nx[0]), 0.0f, static_cast<float>(width));
   float xupper = clamp(ceil(nx[2]), 0.0f, static_cast<float>(width));
   int axissamp = static_cast<int>(sqrt(sample_rate));
-
+  float denom, xa, xb, ya, yb, offxb, offxc, offyb, offyc;
+  float u[2] = {x1-x0,y1-y0};
+  float v[2] = {x2-x0,y2-y0};
+  if (tri != NULL) {
+    denom = u[0] * v[1] - v[0] * u[1];
+    float frac = 1.0f/(axissamp * denom);
+    offxb = v[1] * frac;
+    offxc = -u[1] * frac;
+    offyb = -v[0] * frac;
+    offyc = u[0] * frac;
+  }
   for (int i = ylower; i < yupper; i++) {
     float fi = static_cast<float>(i);
     for (int j = xlower; j < xupper; j++) {
       float fj = static_cast<float>(j);
       for (int subi = 0; subi < axissamp; subi++) {
         float subposi = fi + (subi + 0.5f)/axissamp;
-        float c0 = (y0-subposi) * y[0];
+        float p1 = subposi-y0;
+        float c0 = -p1 * y[0];
         float c1 = (y1-subposi) * y[1];
         float c2 = (y2-subposi) * y[2];
         for (int subj = 0; subj < axissamp; subj++) {
           float subposj = fj + (subj + 0.5f)/axissamp;
           int sum = 0;
-          sum += (subposj-x0) * x[0] < c0;
+          float p2 = subposj-x0;
+          sum += p2 * x[0] < c0;
           sum += (subposj-x1) * x[1] < c1;
-          sum += (subposj-x2) * x[2] < c2;      
-          if (sum == 0) samplebuffer[i][j].fill_color(subi, subj, color);
+          sum += (subposj-x2) * x[2] < c2;
+          if (sum == 0 || sum == 3) {
+            if (tri != NULL) {
+              float b = (p2 * v[1] - v[0] * p1) / denom;
+              float c = (u[0] * p1 - p2 * u[1]) / denom;
+              SampleParams params;
+              Vector3D dxuv;
+              Vector3D dyuv;
+              if (dynamic_cast<TexTri *>(tri) != NULL) {
+                params = {Vector2D(), Vector2D(), Vector2D(), psm, lsm};
+                dxuv = Vector3D(1.0f-b-c-offxb-offxc, b+offxb, c+offxc); 
+                dyuv = Vector3D(1.0f-b-c-offyb-offyc, b+offyb, c+offyc); 
+              }
+              color = tri->color(Vector3D(1.0f-b-c,b,c), dxuv, dyuv, params);
+            }
+            samplebuffer[i][j].fill_color(subi, subj, color);
+          }
         }
       }
     }

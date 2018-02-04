@@ -5,29 +5,75 @@ namespace CGL {
 
 Color Texture::sample(const SampleParams &sp) {
   // Part 5: Fill this in.
-  return Color();
+  Vector2D uv = sp.p_uv;
+  float level = 0;
+  switch (sp.lsm) {
+    case LevelSampleMethod::L_LINEAR:
+      level = get_level(sp);
+      return sample_trilinear(uv, sp.psm, level, level);
+      break;
+    case LevelSampleMethod::L_NEAREST:
+      level = round(get_level(sp));
+    default:
+      if (sp.psm == PixelSampleMethod::P_NEAREST) {
+        return sample_nearest(uv, level);
+      } else {
+        return sample_bilinear(uv, level);
+      }
+  }
 }
 
 float Texture::get_level(const SampleParams &sp) {
   // Part 6: Fill this in.
-  return 0;
+  float dxx = width * sp.p_dx_uv.x;
+  float dxy = height * sp.p_dx_uv.y;
+  float dyy = height * sp.p_dy_uv.y;
+  float dyx = width * sp.p_dy_uv.x;
+  float level = max(dxx*dxx + dxy*dxy, dyx*dyx + dyy*dyy);
+  return clamp(0.5*log2(level), 0.0, 4.0);
 }
 
 Color Texture::sample_nearest(Vector2D uv, int level) {
   // Part 5: Fill this in.
-  return Color();
+  MipLevel* texmap = &mipmap[level];
+  return Color(&(*texmap).texels[4*(static_cast<int>(max(floor(uv.y*(*texmap).height),0.0))*(*texmap).width 
+                                  + static_cast<int>(max(floor(uv.x*(*texmap).width),0.0)))]);
 }
 
 Color Texture::sample_bilinear(Vector2D uv, int level) {
   // Part 5: Fill this in.
-  return Color();
+  MipLevel* texmap = &mipmap[level];
+  float vr = uv.y*(*texmap).height - 0.5;
+  float ur = uv.x*(*texmap).width - 0.5;
+  float flvr = max(floor(vr), 0.0f);
+  float flur = max(floor(ur), 0.0f);
+  float cevr = min(ceil(vr), (*texmap).height - 1.0f);
+  float ceur = min(ceil(ur), (*texmap).width - 1.0f);
+  Color tl = &mipmap[level].texels[4*(static_cast<int>(flvr)*(*texmap).width + static_cast<int>(flur))];
+  Color tr = &mipmap[level].texels[4*(static_cast<int>(flvr)*(*texmap).width + static_cast<int>(ceur))]; 
+  Color bl = &mipmap[level].texels[4*(static_cast<int>(cevr)*(*texmap).width + static_cast<int>(flur))];
+  Color br = &mipmap[level].texels[4*(static_cast<int>(cevr)*(*texmap).width + static_cast<int>(ceur))];
+  vr = vr - floor(vr);
+  ur = ur - floor(ur);
+  
+  return lerp(lerp(tl, tr, ur),lerp(bl, br, ur), vr);
 }
 
-Color Texture::sample_trilinear(Vector2D uv, Vector2D du, Vector2D dv) {
+Color Texture::sample_trilinear(Vector2D uv, PixelSampleMethod psm, float levelx, float levely) {
   // Part 6: Fill this in.
-  return Color();
+  int lower = floor(levelx);
+  int upper = ceil(levelx);
+  float ratio = levelx - lower;
+  if (psm == PixelSampleMethod::P_NEAREST) {
+    return lerp(sample_nearest(uv, lower), sample_nearest(uv, upper), ratio);
+  } else {
+    return lerp(sample_bilinear(uv, lower), sample_bilinear(uv, upper), ratio);
+  }
 }
 
+Color Texture::lerp(Color a, Color b, float r) {
+  return (1-r)*a + r*b;
+}
 
 
 

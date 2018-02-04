@@ -47,7 +47,12 @@ void Triangle::draw(DrawRend *dr, Matrix3x3 global_transform) {
  */
 Color ColorTri::color(Vector3D p_bary, Vector3D p_dx_bary, Vector3D p_dy_bary, SampleParams sp) {
   // Part 4: Fill this in.
-  return Color();
+  unsigned char r =round(255 * (p_bary.x*p0_col.r+p_bary.y*p1_col.r+p_bary.z*p2_col.r));
+  unsigned char g =round(255 * (p_bary.x*p0_col.g+p_bary.y*p1_col.g+p_bary.z*p2_col.g));
+  unsigned char b =round(255 * (p_bary.x*p0_col.b+p_bary.y*p1_col.b+p_bary.z*p2_col.b));
+  unsigned char a =round(255 * (p_bary.x*p0_col.a+p_bary.y*p1_col.a+p_bary.z*p2_col.a));
+  unsigned char c[4] = {r, g, b, a};
+  return Color(c);
 }
 
 /**
@@ -60,8 +65,14 @@ Color ColorTri::color(Vector3D p_bary, Vector3D p_dx_bary, Vector3D p_dy_bary, S
 Color TexTri::color(Vector3D p_bary, Vector3D p_dx_bary, Vector3D p_dy_bary, SampleParams sp) {
   // Part 5: Fill this in with bilinear sampling.
   // Part 6: Fill this in with trilinear sampling as well.
-
-  return Color();
+  Vector2D dxbar = Vector2D(p_dx_bary.x*p0_uv.x + p_dx_bary.y*p1_uv.x + p_dx_bary.z*p2_uv.x, 
+                            p_dx_bary.x*p0_uv.y + p_dx_bary.y*p1_uv.y + p_dx_bary.z*p2_uv.y);
+  Vector2D dybar = Vector2D(p_dy_bary.x*p0_uv.x + p_dy_bary.y*p1_uv.x + p_dy_bary.z*p2_uv.x, 
+                            p_dy_bary.x*p0_uv.y + p_dy_bary.y*p1_uv.y + p_dy_bary.z*p2_uv.y);
+  sp.p_uv = Vector2D(p_bary.x*p0_uv.x + p_bary.y*p1_uv.x + p_bary.z*p2_uv.x, p_bary.x*p0_uv.y + p_bary.y*p1_uv.y + p_bary.z*p2_uv.y);
+  sp.p_dx_uv = Vector2D(dxbar.x - sp.p_uv.x, dxbar.y - sp.p_uv.y);
+  sp.p_dy_uv = Vector2D(dybar.x - sp.p_uv.x, dybar.y - sp.p_uv.y);
+  return tex->sample(sp);
 }
 
 void Group::draw(DrawRend *dr, Matrix3x3 global_transform) {

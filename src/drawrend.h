@@ -170,7 +170,6 @@ private:
       }
     }
   }
-  
   void sort3(float *a);
 };
 
