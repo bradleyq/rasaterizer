@@ -36,7 +36,7 @@
 <p>I implemented a rasterizer that can read in svg files and render them
 with colors and texures. The rasterizer also has filters like antialiasing, biliniear
 interpolation, and mipmapping for improvement of overall image quality. The part
-I enjoyed enjoyed most was bulding the rasterizer's filtering effects. Filters
+I enjoyed most was bulding the rasterizer's filtering effects. Filters
 always looked like complex magic to me, but now I understand how simple the concept
 is. Of course, I am also awed by how well optimized these processes are in 
 professional use (as compared to mine).
@@ -57,7 +57,7 @@ professional use (as compared to mine).
   the same sign in this setup. Once I know a pixel is in a triangle, I fetch its color and draw it.
 </p>
 <div align="middle">
-  <img src="images/image1.png" align="middle" width="400px"/>
+  <img src="images/image1.png" align="middle" width="800px"/>
   <figcaption align="middle">Test 4</figcaption>
 </div>
 <p>
@@ -100,7 +100,7 @@ professional use (as compared to mine).
 
 <h3 align="middle">Part 3: Transforms</h3>
 <div align="middle">
-  <img src="images/image5.png" align="middle" width="400px"/>
+  <img src="images/image5.png" align="middle" width="1000px"/>
   <figcaption align="middle">A Red Dancer</figcaption>
 </div>
 <p>
@@ -117,8 +117,11 @@ professional use (as compared to mine).
   vertices. More specifically, if a pixel in question were to be connected to each vertex, the barycentric coordinate
   from a vertex is the the area of the subtriangle opposite the vertex over total area. My specific implementation, however,
   uses Kramer's rule to solve a 2x2 system for Barycentric coordinates. This take significantly fewer computations
-  than finding areas and ratios given in the lecture slide. An important property of these coordinates is that the 
-  coordinate from each vertex summed is 1. Thus, These coordinates can be used to take linear combinations of 
+  than finding areas and ratios given in the lecture slide. 
+</p>
+<p>
+  An important property of these coordinates is that the 
+  coordinate from each vertex summed is 1. Thus, these coordinates can be used to take linear combinations of 
   vertex colors and calculate good gradients as shown below. Notice how the middle of the triangle is perfectly grey
   which is avg of r, g, and b.
 </p>
@@ -126,11 +129,11 @@ professional use (as compared to mine).
 <div align="middle">
   <table style="width=100%">
     <tr>
-      <img src="images/image6.png" align="middle" width="400px"/>
+      <img src="images/image6.png" align="middle" width="600px"/>
       <figcaption align="middle">Triangle with pure red, green, blue vertices and barycentric blending</figcaption>
     </tr>
     <tr>
-      <img src="images/image7.png" align="middle" width="400px"/>
+      <img src="images/image7.png" align="middle" width="600px"/>
       <figcaption align="middle">Test 7</figcaption>
     </tr>
     <br>
@@ -144,7 +147,7 @@ professional use (as compared to mine).
   between samples, sampling from one requires a form of extrapolation. We implemented two variants: nearest and bilinear.
   Nearest finds the closest sample and takes that color value. Biliniear takes the lerp(weighted average) between the 
   four closest pixels. I implemented the pixel sampling for texures by transforming cartesian coordinates to UV coordinates
-  in the texures. This is done through converting cartesian to barycentring first. Then, I take a barycentric linear 
+  in the texures. This is done through converting cartesian to barycentric first. Then, I take a barycentric linear 
   combination of the UV coordinates of the triangle vertexes to find the UV coordinate of the pixel. I can then use the 
   pixel sampling techniques described earlier to sample the color at that point on the texture.
 </p>
@@ -191,7 +194,7 @@ a stretched, low resolution, or highly alised texture as shown in the images abo
   to match a size similar to the pixel size. Trilinear filtering is implemented by taking an additional lerp between the two 
   closest levels (mipmaps).
 </p>
-<div align="middle">
+<div align="left">
   <table style="width=100%">
     <tr>
       <td>
@@ -251,7 +254,7 @@ a stretched, low resolution, or highly alised texture as shown in the images abo
 <p>This is not a custom svg at all. Instead, this is basic/test7.svg. I had an elusive bug in the barycentric calculation
 that resulted in this beauty.</p>
 <div align="middle">
-  <img src="images/image19.png" align="middle" width="400px"/>
+  <img src="images/image19.png" align="middle" width="1000px"/>
   <figcaption align="middle">Wheel of Frustration</figcaption>
 </div>
 
