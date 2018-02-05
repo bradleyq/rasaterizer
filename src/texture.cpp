@@ -30,7 +30,7 @@ float Texture::get_level(const SampleParams &sp) {
   float dyy = height * sp.p_dy_uv.y;
   float dyx = width * sp.p_dy_uv.x;
   float level = max(dxx*dxx + dxy*dxy, dyx*dyx + dyy*dyy);
-  return clamp(0.5*log2(level), 0.0, 4.0);
+  return clamp(0.5*log2(level), 0.0, mipmap.size()-1.0);
 }
 
 Color Texture::sample_nearest(Vector2D uv, int level) {
